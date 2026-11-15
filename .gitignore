@@ -66,6 +66,8 @@ storage/
 
 # Preserve empty upload directories if needed
 !uploads/.gitkeep
+!**/uploads/.gitkeep
+
 
 # ==========================================
 # Operating system files

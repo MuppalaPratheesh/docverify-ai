@@ -1,0 +1,19 @@
+{
+  "name": "docverify-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DocVerify AI monorepo — academic document verification platform",
+  "scripts": {
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "npm --prefix backend run dev",
+    "build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "lint": "npm --prefix backend run lint && npm --prefix frontend run lint",
+    "typecheck": "npm --prefix backend run typecheck && npm --prefix frontend run typecheck",
+    "test": "npm --prefix backend run test",
+    "format": "npm --prefix backend run format && npm --prefix frontend run format",
+    "format:check": "npm --prefix backend run format:check && npm --prefix frontend run format:check"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
