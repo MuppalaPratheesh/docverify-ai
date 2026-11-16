@@ -147,10 +147,12 @@ git clone https://github.com/MuppalaPratheesh/docverify-ai.git
 cd docverify-ai
 ```
 
-Create the local environment file:
+Create local environment files from the examples:
 
 ```bash
 cp .env.example .env
+cp frontend/.env.example frontend/.env
+cp backend/.env.example backend/.env
 ```
 
 Generate a secure local JWT secret:
@@ -159,39 +161,26 @@ Generate a secure local JWT secret:
 openssl rand -base64 32
 ```
 
-Add the generated value to `JWT_SECRET` inside `.env`.
+Add the generated value to `JWT_SECRET` inside `.env` and `backend/.env`.
 
-Update other environment variables if necessary.
+Update other environment variables if necessary. Never commit real secrets.
 
 ### Running with Docker
 
-Once Docker Compose configuration is implemented:
+Docker Compose configuration will be added in a later Phase 2 step. Planned commands:
 
 ```bash
 docker compose up --build -d
-```
-
-Check running containers:
-
-```bash
 docker compose ps
-```
-
-View application logs:
-
-```bash
 docker compose logs -f
-```
-
-Stop the application:
-
-```bash
 docker compose down
 ```
 
 ### Local Development
 
-Install backend dependencies:
+Frontend and backend run independently. Use two terminals.
+
+**Backend** (http://localhost:4000):
 
 ```bash
 cd backend
@@ -199,7 +188,7 @@ npm install
 npm run dev
 ```
 
-In another terminal, install frontend dependencies:
+**Frontend** (http://localhost:3000):
 
 ```bash
 cd frontend
@@ -207,7 +196,38 @@ npm install
 npm run dev
 ```
 
-For local backend development outside Docker, configure the PostgreSQL hostname in `DATABASE_URL` to use `localhost` when appropriate.
+Convenience scripts from the repository root:
+
+```bash
+npm run dev:backend
+npm run dev:frontend
+npm run lint
+npm run build
+npm test
+```
+
+Verify the API health endpoint:
+
+```bash
+curl http://localhost:4000/api/health
+```
+
+Expected response shape:
+
+```json
+{
+  "success": true,
+  "data": {
+    "status": "healthy",
+    "service": "docverify-ai-backend",
+    "environment": "development",
+    "timestamp": "...",
+    "uptimeSeconds": 0
+  }
+}
+```
+
+For local backend development outside Docker, set the PostgreSQL hostname in `DATABASE_URL` to `localhost` (see `backend/.env.example`).
 
 ## 10. Application URLs
 
@@ -295,13 +315,35 @@ git push -u origin feat/document-upload
 - Use only synthetic or anonymized documents.
 - Never submit real personal documents to external AI services.
 
-## 15. Project Status
+## 15. Available Scripts
 
-**Current milestone:** Phase 2 – Core Platform Implementation
+| Location | Command | Description |
+|---|---|---|
+| `frontend/` | `npm run dev` | Start Vite development server |
+| `frontend/` | `npm run build` | Typecheck and production build |
+| `frontend/` | `npm run lint` | Run ESLint |
+| `backend/` | `npm run dev` | Start Express API with hot reload |
+| `backend/` | `npm run build` | Compile TypeScript to `dist/` |
+| `backend/` | `npm run lint` | Run ESLint |
+| `backend/` | `npm test` | Run Jest + Supertest |
+| root | `npm run lint` / `build` / `test` | Run checks across apps |
+
+## 16. Project Status
+
+**Current milestone:** Phase 2 – Core Platform Implementation (scaffold complete)
+
+**Completed in this step:**
+
+- Monorepo layout (`frontend`, `backend`, `docs`, `.github/workflows`)
+- React + Vite + TypeScript frontend with responsive sidebar layout
+- Express + TypeScript backend with `/api/health`
+- Environment examples and validation
+- ESLint, Prettier, CI workflow and Docker ignore rules
 
 **Repository:** https://github.com/MuppalaPratheesh/docverify-ai
 
 This project is being developed as an individual academic project. Implementation status, testing evidence and documentation will be updated as development progresses.
+
 
 ---
 
