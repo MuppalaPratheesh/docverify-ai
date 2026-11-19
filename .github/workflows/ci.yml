@@ -26,14 +26,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://docverify_user:change_me_local_only@localhost:5433/docverify_db?schema=public
+
       - name: Lint
         run: npm run lint
 
       - name: Test
         run: npm test
+        env:
+          DATABASE_URL: postgresql://docverify_user:change_me_local_only@localhost:5433/docverify_db?schema=public
+          JWT_SECRET: ci_only_jwt_secret_value
 
       - name: Build
         run: npm run build
+        env:
+          DATABASE_URL: postgresql://docverify_user:change_me_local_only@localhost:5433/docverify_db?schema=public
 
   frontend:
     name: Frontend lint and build

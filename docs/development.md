@@ -14,6 +14,20 @@ Generate a JWT secret and place it in both the root `.env` and `backend/.env`:
 openssl rand -base64 32
 ```
 
+Set development-only seed passwords in `SEED_*_PASSWORD` variables before seeding.
+
+## Database
+
+```bash
+docker compose up -d postgres
+cd backend
+npm install
+npx prisma migrate dev
+npx prisma db seed
+```
+
+See [`database.md`](database.md) for schema details. Host port mapping is `localhost:5433`.
+
 ## Run applications independently
 
 Backend:
@@ -32,10 +46,9 @@ npm install
 npm run dev
 ```
 
-Or from the repository root (npm workspaces):
+From the repository root:
 
 ```bash
-npm install
 npm run dev:backend
 npm run dev:frontend
 ```

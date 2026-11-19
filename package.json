@@ -11,8 +11,14 @@
     "typecheck": "npm --prefix backend run typecheck && npm --prefix frontend run typecheck",
     "test": "npm --prefix backend run test",
     "format": "npm --prefix backend run format && npm --prefix frontend run format",
-    "format:check": "npm --prefix backend run format:check && npm --prefix frontend run format:check"
+    "format:check": "npm --prefix backend run format:check && npm --prefix frontend run format:check",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose stop postgres",
+    "db:migrate": "npm --prefix backend run prisma:migrate",
+    "db:seed": "npm --prefix backend run prisma:seed",
+    "db:setup": "npm run db:up && npm --prefix backend run db:setup"
   },
+
   "engines": {
     "node": ">=20"
   }

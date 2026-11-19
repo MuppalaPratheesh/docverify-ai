@@ -238,29 +238,45 @@ The planned local service addresses are:
 | Frontend | http://localhost:3000 |
 | Backend API | http://localhost:4000 |
 | Backend Health | http://localhost:4000/api/health |
+| PostgreSQL (Docker host mapping) | localhost:5433 |
 | Qdrant | http://localhost:6333 |
 
 ## 11. Database Management
 
-The project uses Prisma ORM with PostgreSQL.
+The project uses Prisma ORM with PostgreSQL. Schema, migrations and seed logic live in `backend/prisma/`. Full model documentation is in [`docs/database.md`](docs/database.md).
 
-Typical database commands:
+Start PostgreSQL:
+
+```bash
+docker compose up -d postgres
+```
+
+Configure the backend connection for local development (host port **5433**):
+
+```bash
+# backend/.env
+DATABASE_URL=postgresql://docverify_user:change_me_local_only@localhost:5433/docverify_db?schema=public
+```
+
+Set synthetic seed credentials in `.env` / `backend/.env` (`SEED_ADMIN_PASSWORD`, `SEED_REVIEWER_PASSWORD`, `SEED_APPLICANT_PASSWORD`). Do not use production passwords.
+
+Apply migrations, generate the client and seed:
+
+```bash
+cd backend
+npm install
+npx prisma migrate dev
+npx prisma db seed
+```
+
+Other useful commands:
 
 ```bash
 npx prisma generate
-
-npx prisma migrate dev
-
 npx prisma studio
-```
-
-Production-style migration deployment:
-
-```bash
 npx prisma migrate deploy
+npm run db:setup
 ```
-
-Run these commands from the backend directory with a correctly configured database connection.
 
 ## 12. Testing and Code Quality
 
@@ -332,11 +348,12 @@ git push -u origin feat/document-upload
 
 **Current milestone:** Phase 2 – Core Platform Implementation (scaffold complete)
 
-**Completed in this step:**
+**Completed so far:**
 
 - Monorepo layout (`frontend`, `backend`, `docs`, `.github/workflows`)
 - React + Vite + TypeScript frontend with responsive sidebar layout
 - Express + TypeScript backend with `/api/health`
+- PostgreSQL via Docker Compose and Prisma schema/migrations/seed
 - Environment examples and validation
 - ESLint, Prettier, CI workflow and Docker ignore rules
 
