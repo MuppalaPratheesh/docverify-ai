@@ -1,0 +1,212 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  APPLICANT
+  REVIEWER
+  ADMIN
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  NEEDS_INFORMATION
+  COMPLETED
+}
+
+enum DocumentStatus {
+  ACTIVE
+  REPLACED
+}
+
+enum ReviewDecision {
+  APPROVED
+  NEEDS_INFORMATION
+  REJECTED
+}
+
+enum DocumentRequestStatus {
+  OPEN
+  RESOLVED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  applications     Application[]     @relation("ApplicantApplications")
+  uploadedDocuments Document[]       @relation("DocumentUploader")
+  reviewActions    ReviewAction[]    @relation("ReviewerActions")
+  documentRequests DocumentRequest[] @relation("ReviewerDocumentRequests")
+  auditLogs        AuditLog[]        @relation("AuditActor")
+
+  @@index([role])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model Application {
+  id                String            @id @default(cuid())
+  applicationNumber String            @unique
+  applicantId       String
+  status            ApplicationStatus @default(DRAFT)
+  notes             String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  applicant        User              @relation("ApplicantApplications", fields: [applicantId], references: [id], onDelete: Restrict)
+  documents        Document[]
+  reviewActions    ReviewAction[]
+  documentRequests DocumentRequest[]
+
+  @@index([applicantId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("applications")
+}
+
+model DocumentType {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  documents        Document[]
+  documentRequests DocumentRequest[]
+  verificationRules VerificationRule[]
+
+  @@index([active])
+  @@map("document_types")
+}
+
+model Document {
+  id                   String         @id @default(cuid())
+  applicationId        String
+  documentTypeId       String
+  originalFilename     String
+  storedFilename       String
+  storagePath          String
+  mimeType             String
+  fileSize             Int
+  status               DocumentStatus @default(ACTIVE)
+  uploadedAt           DateTime       @default(now())
+  uploadedById         String
+  supersededDocumentId String?
+
+  application        Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  documentType       DocumentType @relation(fields: [documentTypeId], references: [id], onDelete: Restrict)
+  uploadedBy         User         @relation("DocumentUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+  supersededDocument Document?    @relation("DocumentReplacementHistory", fields: [supersededDocumentId], references: [id], onDelete: SetNull)
+  replacements       Document[]   @relation("DocumentReplacementHistory")
+
+  @@index([applicationId])
+  @@index([documentTypeId])
+  @@index([uploadedById])
+  @@index([status])
+  @@index([uploadedAt])
+  @@index([supersededDocumentId])
+  @@map("documents")
+}
+
+model ReviewAction {
+  id            String         @id @default(cuid())
+  applicationId String
+  reviewerId    String
+  decision      ReviewDecision
+  comment       String?
+  createdAt     DateTime       @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  reviewer    User        @relation("ReviewerActions", fields: [reviewerId], references: [id], onDelete: Restrict)
+
+  @@index([applicationId])
+  @@index([reviewerId])
+  @@index([decision])
+  @@index([createdAt])
+  @@map("review_actions")
+}
+
+model DocumentRequest {
+  id             String                @id @default(cuid())
+  applicationId  String
+  reviewerId     String
+  documentTypeId String
+  message        String
+  status         DocumentRequestStatus @default(OPEN)
+  createdAt      DateTime              @default(now())
+  resolvedAt     DateTime?
+
+  application  Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  reviewer     User         @relation("ReviewerDocumentRequests", fields: [reviewerId], references: [id], onDelete: Restrict)
+  documentType DocumentType @relation(fields: [documentTypeId], references: [id], onDelete: Restrict)
+
+  @@index([applicationId])
+  @@index([reviewerId])
+  @@index([documentTypeId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("document_requests")
+}
+
+model VerificationRule {
+  id             String   @id @default(cuid())
+  title          String
+  description    String?
+  documentTypeId String
+  isActive       Boolean  @default(true)
+  effectiveDate  DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  documentType DocumentType @relation(fields: [documentTypeId], references: [id], onDelete: Restrict)
+
+  @@index([documentTypeId])
+  @@index([isActive])
+  @@index([effectiveDate])
+  @@map("verification_rules")
+}
+
+model ReferenceSource {
+  id                String   @id @default(cuid())
+  title             String
+  version           String
+  effectiveDate     DateTime
+  sourceDescription String?
+  createdAt         DateTime @default(now())
+
+  @@unique([title, version])
+  @@index([effectiveDate])
+  @@map("reference_sources")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

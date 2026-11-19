@@ -2,9 +2,9 @@ import { config as loadDotenv } from 'dotenv';
 import { z } from 'zod';
 import path from 'node:path';
 
-// Load root .env first, then backend/.env for local overrides.
+// Load root .env first, then backend/.env with override so local values win.
 loadDotenv({ path: path.resolve(process.cwd(), '../.env') });
-loadDotenv({ path: path.resolve(process.cwd(), '.env') });
+loadDotenv({ path: path.resolve(process.cwd(), '.env'), override: true });
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -14,9 +14,16 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().min(1).default('http://localhost:3000'),
   DATABASE_URL: z
     .string()
-    .min(1)
-    .optional()
-    .describe('Required when database features are enabled'),
+    .min(1, 'DATABASE_URL is required')
+    .describe('PostgreSQL connection string used by Prisma'),
+  SEED_ADMIN_EMAIL: z.string().email().optional(),
+  SEED_ADMIN_PASSWORD: z.string().min(8).optional(),
+  SEED_REVIEWER_EMAIL: z.string().email().optional(),
+  SEED_REVIEWER_PASSWORD: z.string().min(8).optional(),
+  SEED_APPLICANT_EMAIL: z.string().email().optional(),
+  SEED_APPLICANT_PASSWORD: z.string().min(8).optional(),
+  BCRYPT_SALT_ROUNDS: z.coerce.number().int().min(10).max(15).default(12),
+
   JWT_SECRET: z
     .string()
     .min(16, 'JWT_SECRET must be at least 16 characters')

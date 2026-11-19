@@ -7,19 +7,23 @@ DocVerify AI is organized as a monorepo with independently runnable frontend and
 ```text
 docverify-ai/
 ├── frontend/     React + Vite + TypeScript SPA
-├── backend/      Express + TypeScript API
+├── backend/      Express + TypeScript API + Prisma
 ├── docs/         Project documentation
 └── .github/      CI workflows
 ```
 
-## Runtime layout (Phase 2 scaffold)
+## Runtime layout (Phase 2)
 
 | Layer | Responsibility |
 |---|---|
 | Frontend | Application shell, routing, API health status display |
-| Backend | HTTP API, environment validation, health endpoint |
-| PostgreSQL | Primary relational data store (Prisma planned next) |
+| Backend | HTTP API, environment validation, health endpoint, Prisma data access |
+| PostgreSQL | Primary relational data store (Prisma models and migrations) |
 | Qdrant | Vector store reserved for Phase 3 AI features |
+
+## Data layer
+
+Prisma models cover users, applications, documents, review workflow, verification rules, reference sources and audit logs. See [`database.md`](database.md) for the full schema.
 
 ## Current API surface
 
@@ -29,5 +33,6 @@ docverify-ai/
 ## Security notes
 
 - Secrets belong in `.env` files that are never committed.
-- JWT cookie auth, uploads, Prisma models and role checks are planned for later Phase 2 steps.
-- No OCR/LLM/RAG features are implemented in this scaffold.
+- Seed passwords are environment-configured and bcrypt-hashed.
+- JWT cookie auth, uploads and role-protected routes are planned for later Phase 2 steps.
+- No OCR/LLM/RAG features are implemented in this phase.
