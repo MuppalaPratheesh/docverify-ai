@@ -1,11 +1,12 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { ApplicationStatus, DocumentRequestStatus, DocumentStatus, UserRole } from '@prisma/client';
+import { DocumentRequestStatus, DocumentStatus, UserRole } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { AppError } from '../middleware/errorHandler';
 import type { AuthUser } from '../types/express';
 import type { UploadDocumentFields } from '../validators/applicationValidators';
+import { canUploadDocuments } from '../utils/applicationStatus';
 import {
   extensionForMime,
   resolveSafeStoragePath,
@@ -62,10 +63,7 @@ export async function uploadApplicationDocument(
       throw new AppError('You can only upload documents to your own applications', 403);
     }
 
-    if (
-      application.status !== ApplicationStatus.DRAFT &&
-      application.status !== ApplicationStatus.NEEDS_INFORMATION
-    ) {
+    if (!canUploadDocuments(application.status)) {
       throw new AppError(
         'Documents can only be uploaded while the application is DRAFT or NEEDS_INFORMATION',
         400,

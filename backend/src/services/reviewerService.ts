@@ -13,6 +13,11 @@ import type {
   ReviewerApplicationQuery,
   UpdateReviewerNotesInput,
 } from '../validators/reviewerValidators';
+import {
+  canRecordReviewDecision,
+  canRequestAdditionalDocuments,
+  nextStatusForDecision,
+} from '../utils/applicationStatus';
 import { writeAuditLog } from './auditService';
 import { assertCanAccessApplication, assertCanRecordReview } from './authorizationService';
 
@@ -55,18 +60,6 @@ const reviewerDetailInclude = {
 function ensureReviewer(user: AuthUser): void {
   if (user.role !== UserRole.REVIEWER && user.role !== UserRole.ADMIN) {
     throw new AppError('Reviewer access required', 403);
-  }
-}
-
-function nextStatusForDecision(decision: ReviewDecision): ApplicationStatus {
-  switch (decision) {
-    case ReviewDecision.APPROVED:
-    case ReviewDecision.REJECTED:
-      return ApplicationStatus.COMPLETED;
-    case ReviewDecision.NEEDS_INFORMATION:
-      return ApplicationStatus.NEEDS_INFORMATION;
-    default:
-      return ApplicationStatus.UNDER_REVIEW;
   }
 }
 
@@ -256,7 +249,7 @@ export async function recordReviewDecision(
     throw new AppError('Application not found', 404);
   }
 
-  if (existing.status === ApplicationStatus.COMPLETED) {
+  if (!canRecordReviewDecision(existing.status)) {
     throw new AppError('This application has already been completed', 400);
   }
 
@@ -319,7 +312,7 @@ export async function createDocumentRequest(
     throw new AppError('Application not found', 404);
   }
 
-  if (existing.status === ApplicationStatus.COMPLETED) {
+  if (!canRequestAdditionalDocuments(existing.status)) {
     throw new AppError('Cannot request documents for a completed application', 400);
   }
 

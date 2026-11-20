@@ -6,22 +6,117 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-docverify_db}
       POSTGRES_USER: ${POSTGRES_USER:-docverify_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_local_only}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     ports:
       # Host 5433 avoids conflicts with a local PostgreSQL already bound to 5432.
-      - '5433:5432'
+      - '${POSTGRES_HOST_PORT:-5433}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - docverify_net
     healthcheck:
       test:
         [
           'CMD-SHELL',
-          'pg_isready -U ${POSTGRES_USER:-docverify_user} -d ${POSTGRES_DB:-docverify_db}',
+          'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB',
         ]
       interval: 5s
       timeout: 5s
       retries: 10
       start_period: 10s
 
+  qdrant:
+    image: qdrant/qdrant:v1.13.2
+    container_name: docverify-qdrant
+    restart: unless-stopped
+    ports:
+      - '${QDRANT_HOST_PORT:-6333}:6333'
+      - '${QDRANT_GRPC_HOST_PORT:-6334}:6334'
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - docverify_net
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'bash -c "exec 3<>/dev/tcp/127.0.0.1/6333"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: docverify-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      HOST: 0.0.0.0
+      PORT: 4000
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-docverify_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-docverify_db}?schema=public
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      COOKIE_NAME: ${COOKIE_NAME:-docverify_session}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      COOKIE_HTTP_ONLY: ${COOKIE_HTTP_ONLY:-true}
+      COOKIE_SAME_SITE: ${COOKIE_SAME_SITE:-lax}
+      UPLOAD_DIR: /app/uploads
+      MAX_FILE_SIZE_BYTES: ${MAX_FILE_SIZE_BYTES:-10485760}
+      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
+      QDRANT_API_KEY: ${QDRANT_API_KEY:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      BCRYPT_SALT_ROUNDS: ${BCRYPT_SALT_ROUNDS:-12}
+      SEED_ON_START: ${SEED_ON_START:-true}
+      SEED_ADMIN_NAME: ${SEED_ADMIN_NAME:-System Administrator}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@docverify.local}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:?Set SEED_ADMIN_PASSWORD in .env}
+      SEED_REVIEWER_NAME: ${SEED_REVIEWER_NAME:-Document Reviewer}
+      SEED_REVIEWER_EMAIL: ${SEED_REVIEWER_EMAIL:-reviewer@docverify.local}
+      SEED_REVIEWER_PASSWORD: ${SEED_REVIEWER_PASSWORD:?Set SEED_REVIEWER_PASSWORD in .env}
+      SEED_APPLICANT_NAME: ${SEED_APPLICANT_NAME:-Synthetic Applicant}
+      SEED_APPLICANT_EMAIL: ${SEED_APPLICANT_EMAIL:-applicant@docverify.local}
+      SEED_APPLICANT_PASSWORD: ${SEED_APPLICANT_PASSWORD:?Set SEED_APPLICANT_PASSWORD in .env}
+    ports:
+      - '${BACKEND_HOST_PORT:-4000}:4000'
+    volumes:
+      - backend_uploads:/app/uploads
+    networks:
+      - docverify_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:4000/api}
+    container_name: docverify-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - '${FRONTEND_HOST_PORT:-3000}:3000'
+    networks:
+      - docverify_net
+
+networks:
+  docverify_net:
+    driver: bridge
+
 volumes:
   postgres_data:
+  qdrant_data:
+  backend_uploads:

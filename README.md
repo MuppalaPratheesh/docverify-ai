@@ -167,7 +167,25 @@ Update other environment variables if necessary. Never commit real secrets.
 
 ### Running with Docker
 
-Docker Compose configuration will be added in a later Phase 2 step. Planned commands:
+From the repository root (requires a root `.env` created from `.env.example`):
+
+```bash
+cp .env.example .env
+# Edit JWT_SECRET and seed passwords in .env before the first run.
+
+docker compose up --build
+```
+
+Services:
+
+| Service | Host port | Purpose |
+|---|---|---|
+| `frontend` | 3000 | React production build (Nginx) |
+| `backend` | 4000 | Express API (migrates + seeds on start) |
+| `postgres` | 5433 | PostgreSQL with named volume |
+| `qdrant` | 6333 | Qdrant with named volume |
+
+Useful commands:
 
 ```bash
 docker compose up --build -d
@@ -175,6 +193,8 @@ docker compose ps
 docker compose logs -f
 docker compose down
 ```
+
+Uploads persist in the `backend_uploads` volume. Database and Qdrant data persist in `postgres_data` and `qdrant_data`.
 
 ### Local Development
 
@@ -292,9 +312,21 @@ npm run build
 npm test
 ```
 
-Backend integration tests are written using Jest and Supertest.
+Backend unit and integration tests use Jest and Supertest against a dedicated PostgreSQL database (`docverify_test`, configured in `backend/.env.test`). The suite seeds synthetic users and document types, resets transactional data between tests, and never uses real personal documents.
 
-GitHub Actions is configured to check code quality, run tests and build the application images.
+```bash
+cd backend
+npm test
+```
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on pushes and pull requests to `main`:
+
+- Frontend ESLint, TypeScript typecheck, and production build
+- Backend ESLint, TypeScript typecheck, unit tests, and integration tests (PostgreSQL service)
+- Prisma schema validation and migration deploy/status checks
+- Docker Compose config validation and frontend/backend image builds
+
+Inspect runs: repository **Actions** tab → select the **CI** workflow → open the commit/PR run → expand each job log.
 
 ## 13. Git Workflow
 

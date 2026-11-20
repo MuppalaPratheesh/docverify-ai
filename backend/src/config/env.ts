@@ -2,9 +2,28 @@ import { config as loadDotenv } from 'dotenv';
 import { z } from 'zod';
 import path from 'node:path';
 
+// Preserve an explicit test mode set by Jest before dotenv overrides it.
+const requestedTestMode = process.env.NODE_ENV === 'test';
+const presetTestDatabaseUrl = process.env.DATABASE_URL;
+const presetJwtSecret = process.env.JWT_SECRET;
+
 // Load root .env first, then backend/.env with override so local values win.
 loadDotenv({ path: path.resolve(process.cwd(), '../.env') });
 loadDotenv({ path: path.resolve(process.cwd(), '.env'), override: true });
+
+// Automated tests must never inherit the development database URL.
+if (requestedTestMode) {
+  loadDotenv({ path: path.resolve(process.cwd(), '.env.test'), override: true });
+  process.env.NODE_ENV = 'test';
+
+  // CI / shell-provided values win over local dotenv files.
+  if (presetTestDatabaseUrl) {
+    process.env.DATABASE_URL = presetTestDatabaseUrl;
+  }
+  if (presetJwtSecret) {
+    process.env.JWT_SECRET = presetJwtSecret;
+  }
+}
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
