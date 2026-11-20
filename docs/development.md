@@ -26,7 +26,7 @@ npx prisma migrate dev
 npx prisma db seed
 ```
 
-See [`database.md`](database.md) for schema details. Host port mapping is `localhost:5433`.
+See [`database-design.md`](database-design.md) and [`database.md`](database.md) for schema details. Host port mapping is `localhost:5433`. Full Compose instructions: [`docker-setup.md`](docker-setup.md). Tests: [`testing.md`](testing.md).
 
 ## Run applications independently
 
