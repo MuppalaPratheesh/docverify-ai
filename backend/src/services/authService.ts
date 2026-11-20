@@ -121,6 +121,10 @@ export async function changeUserRole(
   targetUserId: string,
   nextRole: UserRole,
 ): Promise<PublicUser> {
+  if (actorId === targetUserId) {
+    throw new AppError('Administrators cannot change their own role', 400);
+  }
+
   const target = await prisma.user.findUnique({
     where: { id: targetUserId },
     select: publicUserSelect,

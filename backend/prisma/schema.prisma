@@ -63,6 +63,7 @@ model Application {
   applicantId       String
   status            ApplicationStatus @default(DRAFT)
   notes             String?
+  reviewerNotes     String?
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 

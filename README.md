@@ -355,6 +355,9 @@ git push -u origin feat/document-upload
 - Express + TypeScript backend with `/api/health`
 - PostgreSQL via Docker Compose and Prisma schema/migrations/seed
 - JWT HttpOnly cookie authentication, role middleware and auth UI
+- Applicant applications, document uploads/replacements and authorized downloads
+- Reviewer dashboard with manual decisions, document requests and review history
+- Administration panel for users, document types, rules, references and audit logs
 - Environment examples and validation
 - ESLint, Prettier, CI workflow and Docker ignore rules
 
