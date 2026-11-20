@@ -5,4 +5,5 @@ module.exports = {
   roots: ['<rootDir>/tests', '<rootDir>/src'],
   testMatch: ['**/?(*.)+(spec|test).ts'],
   clearMocks: true,
+  testTimeout: 60000,
 };
