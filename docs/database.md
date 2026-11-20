@@ -1,5 +1,7 @@
 # DocVerify AI Database Structure
 
+> For the Phase 2 design overview, see [`database-design.md`](database-design.md).
+
 PostgreSQL is the primary datastore. Prisma ORM defines the schema, migrations and seed data under `backend/prisma/`.
 
 ## Starting PostgreSQL
