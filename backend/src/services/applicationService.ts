@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma';
 import { AppError } from '../middleware/errorHandler';
 import type { AuthUser } from '../types/express';
 import type { CreateApplicationInput, UpdateApplicationInput } from '../validators/applicationValidators';
+import { canEditApplicationNotes, canSubmitApplication } from '../utils/applicationStatus';
 import { writeAuditLog } from './auditService';
 import { assertCanAccessApplication } from './authorizationService';
 
@@ -139,7 +140,7 @@ export async function updateApplicationNotes(
     throw new AppError('You do not have access to this application', 403);
   }
 
-  if (application.status !== ApplicationStatus.DRAFT) {
+  if (!canEditApplicationNotes(application.status)) {
     throw new AppError('Notes can only be edited while the application is in DRAFT', 400);
   }
 
@@ -168,7 +169,7 @@ export async function submitApplication(user: AuthUser, applicationId: string) {
     throw new AppError('You do not have access to this application', 403);
   }
 
-  if (application.status !== ApplicationStatus.DRAFT) {
+  if (!canSubmitApplication(application.status)) {
     throw new AppError('Only draft applications can be submitted', 400);
   }
 
