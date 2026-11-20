@@ -354,6 +354,7 @@ git push -u origin feat/document-upload
 - React + Vite + TypeScript frontend with responsive sidebar layout
 - Express + TypeScript backend with `/api/health`
 - PostgreSQL via Docker Compose and Prisma schema/migrations/seed
+- JWT HttpOnly cookie authentication, role middleware and auth UI
 - Environment examples and validation
 - ESLint, Prettier, CI workflow and Docker ignore rules
 

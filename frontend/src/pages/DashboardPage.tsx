@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { getApiBaseUrl } from '../config/env';
+import { useAuth } from '../hooks/useAuth';
 
 type HealthResponse = {
   success: boolean;
@@ -10,18 +12,14 @@ type HealthResponse = {
     timestamp: string;
     uptimeSeconds: number;
   };
-  error?: {
-    message: string;
-  };
 };
 
-const apiBaseUrl = getApiBaseUrl();
-
-
 export function DashboardPage() {
+  const { user } = useAuth();
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const apiBaseUrl = getApiBaseUrl();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -33,6 +31,7 @@ export function DashboardPage() {
       try {
         const response = await fetch(`${apiBaseUrl}/health`, {
           signal: controller.signal,
+          credentials: 'include',
         });
 
         if (!response.ok) {
@@ -60,18 +59,22 @@ export function DashboardPage() {
     void loadHealth();
 
     return () => controller.abort();
-  }, []);
+  }, [apiBaseUrl]);
 
   return (
     <section className="panel" aria-labelledby="dashboard-heading">
       <p className="panel__eyebrow">Platform overview</p>
-      <h2 id="dashboard-heading">Welcome to DocVerify AI</h2>
+      <h2 id="dashboard-heading">Welcome{user ? `, ${user.name}` : ''}</h2>
       <p>
-        This Phase 2 scaffold provides the application shell, API health monitoring, and
-        environment-ready project structure for academic document verification.
+        You are signed in as <strong>{user?.role}</strong>. Navigation and API access are enforced
+        by role on the server, not only in the interface.
       </p>
 
       <div className="status-grid">
+        <div className="status-card">
+          <strong>Signed-in user</strong>
+          <span>{user?.email ?? '—'}</span>
+        </div>
         <div className="status-card">
           <strong>API connectivity</strong>
           <span>
@@ -82,17 +85,30 @@ export function DashboardPage() {
           <strong>Environment</strong>
           <span>{health?.data?.environment ?? '—'}</span>
         </div>
-        <div className="status-card">
-          <strong>Service</strong>
-          <span>{health?.data?.service ?? 'docverify-ai-backend'}</span>
-        </div>
       </div>
+
+      {user?.role === 'APPLICANT' ? (
+        <p>
+          Continue to <Link to="/applications">Applications</Link> to prepare submissions, or{' '}
+          <Link to="/documents">Documents</Link> once upload flows are enabled.
+        </p>
+      ) : null}
+
+      {user?.role === 'REVIEWER' ? (
+        <p>
+          Open <Link to="/reviews">Reviews</Link> to inspect applications awaiting decisions.
+        </p>
+      ) : null}
+
+      {user?.role === 'ADMIN' ? (
+        <p>
+          Use <Link to="/settings">Administration</Link> to manage users, document types and rules.
+        </p>
+      ) : null}
 
       {error ? (
         <div className="alert alert--error" role="alert">
-          Could not reach the backend health endpoint at{' '}
-          <code>{apiBaseUrl}/health</code>. Start the API with{' '}
-          <code>npm run dev</code> in <code>/backend</code>. ({error})
+          Could not reach the backend health endpoint at <code>{apiBaseUrl}/health</code>. ({error})
         </div>
       ) : null}
 

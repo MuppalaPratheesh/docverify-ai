@@ -68,3 +68,16 @@ cd frontend && npm run lint && npm run build
 ```bash
 curl http://localhost:4000/api/health
 ```
+
+## Authentication smoke test
+
+```bash
+curl -c cookies.txt -H 'Content-Type: application/json' \
+  -d '{"name":"Test Applicant","email":"test@example.com","password":"SecurePass1"}' \
+  http://localhost:4000/api/auth/register
+
+curl -b cookies.txt http://localhost:4000/api/auth/me
+curl -b cookies.txt -X POST http://localhost:4000/api/auth/logout
+```
+
+See [`authentication.md`](authentication.md) for full auth/authorization details.

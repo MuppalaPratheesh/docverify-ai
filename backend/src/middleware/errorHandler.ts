@@ -41,7 +41,9 @@ export function errorHandler(
     success: false,
     error: {
       message,
-      ...(env.NODE_ENV !== 'production' && err instanceof Error
+      ...(env.NODE_ENV !== 'production' &&
+      err instanceof Error &&
+      statusCode >= 500
         ? { stack: err.stack }
         : {}),
     },
