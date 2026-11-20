@@ -28,11 +28,33 @@ export function errorHandler(
   res: Response,
   _next: NextFunction,
 ): void {
-  const isAppError = err instanceof AppError;
-  const statusCode = isAppError ? err.statusCode : 500;
-  const message = isAppError ? err.message : 'Internal server error';
+  let statusCode = 500;
+  let message = 'Internal server error';
 
-  if (env.NODE_ENV !== 'production') {
+  if (err instanceof AppError) {
+    statusCode = err.statusCode;
+    message = err.message;
+  } else if (
+    typeof err === 'object' &&
+    err !== null &&
+    'name' in err &&
+    (err as { name?: string }).name === 'ZodError' &&
+    'issues' in err
+  ) {
+    statusCode = 400;
+    const issues = (err as { issues: Array<{ message: string }> }).issues;
+    message = issues.map((issue) => issue.message).join('; ') || 'Invalid request';
+  } else if (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    (err as { code?: string }).code === 'LIMIT_FILE_SIZE'
+  ) {
+    statusCode = 400;
+    message = 'File exceeds the maximum allowed size of 10 MB';
+  }
+
+  if (env.NODE_ENV !== 'production' && statusCode >= 500) {
     // eslint-disable-next-line no-console
     console.error(err);
   }

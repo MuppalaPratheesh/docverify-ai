@@ -16,21 +16,46 @@ const navItems: NavItem[] = [
   {
     to: '/applications',
     label: 'Applications',
-    roles: ['APPLICANT', 'REVIEWER', 'ADMIN'],
+    roles: ['APPLICANT', 'ADMIN'],
   },
   {
-    to: '/documents',
-    label: 'Documents',
-    roles: ['APPLICANT', 'REVIEWER', 'ADMIN'],
-  },
-  {
-    to: '/reviews',
-    label: 'Reviews',
+    to: '/reviewer/dashboard',
+    label: 'Reviewer dashboard',
     roles: ['REVIEWER', 'ADMIN'],
   },
   {
-    to: '/settings',
-    label: 'Administration',
+    to: '/reviewer/applications',
+    label: 'Review queue',
+    roles: ['REVIEWER', 'ADMIN'],
+  },
+  {
+    to: '/admin/dashboard',
+    label: 'Admin dashboard',
+    roles: ['ADMIN'],
+  },
+  {
+    to: '/admin/users',
+    label: 'Users',
+    roles: ['ADMIN'],
+  },
+  {
+    to: '/admin/document-types',
+    label: 'Document types',
+    roles: ['ADMIN'],
+  },
+  {
+    to: '/admin/verification-rules',
+    label: 'Verification rules',
+    roles: ['ADMIN'],
+  },
+  {
+    to: '/admin/reference-sources',
+    label: 'Reference sources',
+    roles: ['ADMIN'],
+  },
+  {
+    to: '/admin/audit-logs',
+    label: 'Audit logs',
     roles: ['ADMIN'],
   },
 ];
